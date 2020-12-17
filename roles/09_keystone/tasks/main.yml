@@ -1,0 +1,136 @@
+---
+# tasks file
+# https://docs.openstack.org/install-guide/openstack-services.html
+# https://docs.openstack.org/keystone/train/install/index-rdo.html
+# https://docs.openstack.org/train/install/
+
+  - include_vars: "{{ playbook_dir }}/config.yml" 
+  - include_vars: "{{ playbook_dir }}/passwords.yml"
+  - include_vars: "main.yml"
+
+  - name: Create keystone database and user
+    shell: |
+      mysql -u root -p{{ ROOT_DBPASS }} -e "DROP DATABASE keystone;"
+      mysql -u root -p{{ ROOT_DBPASS }} -e "CREATE DATABASE keystone;"
+      mysql -u root -p{{ ROOT_DBPASS }} -e "GRANT ALL PRIVILEGES ON keystone.* TO 'keystone'@'localhost' IDENTIFIED BY '{{ KEYSTONE_DBPASS }}';"
+      mysql -u root -p{{ ROOT_DBPASS }} -e "GRANT ALL PRIVILEGES ON keystone.* TO 'keystone'@'%' IDENTIFIED BY '{{ KEYSTONE_DBPASS }}';"
+
+
+  - name: Uninstalling the packages
+    yum:
+      name: "{{ packages }}"
+      state: absent
+    vars:
+      packages:
+        - openstack-keystone
+        - httpd
+        - mod_wsgi
+        - bash-completion
+
+  - name: Installing the packages
+    yum:
+      name: "{{ packages }}"
+      state: latest
+    vars:
+      packages:
+        - openstack-keystone
+        - httpd
+        - mod_wsgi
+        - bash-completion
+  
+  - name: Edit the /etc/keystone/keystone.conf 
+    template:
+      src: keystone.conf.j2
+      dest: /etc/keystone/keystone.conf 
+      owner: root 
+      group: keystone
+      mode: '0640'
+  
+  - name: Populate the Identity service database
+    shell: |
+      su -s /bin/sh -c "keystone-manage db_sync" keystone
+    args:
+      warn: no
+
+  - name: Initialize Fernet key repositories
+    shell: |
+      keystone-manage fernet_setup --keystone-user keystone --keystone-group keystone
+      keystone-manage credential_setup --keystone-user keystone --keystone-group keystone  
+      
+  - name: Bootstrap the Identity service
+    shell: |
+      keystone-manage bootstrap --bootstrap-password {{ ADMIN_PASS }} \
+        --bootstrap-admin-url http://{{ openstack.controller.name }}:5000/v3/ \
+        --bootstrap-internal-url http://{{ openstack.controller.name }}:5000/v3/ \
+        --bootstrap-public-url http://{{ openstack.controller.name }}:5000/v3/ \
+        --bootstrap-region-id RegionOne
+
+  - name: Edit the /etc/httpd/conf/httpd.conf file and configure the ServerName option to reference the controller node 
+    template:
+      src: httpd.conf.j2
+      dest: /etc/httpd/conf/httpd.conf 
+      owner: root 
+      group: root
+      mode: '0640'        
+  
+  - name: Delete the link to the /usr/share/keystone/wsgi-keystone.conf file
+    file:
+      name: /etc/httpd/conf.d/wsgi-keystone.conf
+      state: absent
+
+  - name: Create a link to the /usr/share/keystone/wsgi-keystone.conf file
+    file:
+      src: /usr/share/keystone/wsgi-keystone.conf
+      dest: /etc/httpd/conf.d/wsgi-keystone.conf
+      state: link
+
+  - name: Start the Apache HTTP service and configure it to start when the system boots
+    systemd:
+      name: httpd.service
+      state: restarted
+      enabled: yes
+
+  - name: Configure the administrative account by setting the proper environmental variables
+    template:
+      src: admin-openrc.j2
+      dest: /root/admin-openrc
+      owner: root 
+      group: root 
+      mode: '400'
+
+  - name: Create a domain, projects, users, and roles
+    shell: |
+      source /root/admin-openrc
+      openstack domain create --description "An Example Domain" example 
+      openstack project create --domain default --description "Service Project" service
+      openstack project create --domain default --description "Demo Project" demo
+      openstack user create --domain default --password {{ DEMO_PASS }} demo     
+      openstack role create user
+      openstack role add --project demo --user demo user
+
+
+  - name: Create and edit the admin-openrc file 
+    template:
+      src: admin-openrc-pos.j2
+      dest: /root/admin-openrc
+      owner: root 
+      group: root
+      mode: '0400'
+
+  - name: Create and edit the demo-openrc file 
+    template:
+      src: demo-openrc.j2
+      dest: /root/demo-openrc
+      owner: root 
+      group: root
+      mode: '0400'      
+
+
+
+
+
+
+
+    
+
+

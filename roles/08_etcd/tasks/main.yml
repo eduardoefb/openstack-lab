@@ -1,0 +1,55 @@
+---
+# tasks file
+# # https://docs.openstack.org/install-guide/environment-memcached-rdo.html
+
+
+  - include_vars: "{{ playbook_dir }}/config.yml" 
+  - include_vars: "{{ playbook_dir }}/passwords.yml"
+  - include_vars: "main.yml"
+
+
+  - name: Uninstalling the packages
+    yum:
+      name: "{{ packages }}"
+      state: absent
+    vars:
+      packages:
+        - etcd        
+
+  - name: Installing the packages
+    yum:
+      name: "{{ packages }}"
+      state: latest
+    vars:
+      packages:
+        - etcd  
+
+  - name: Start etcd service with default configurations
+    systemd:
+      name: etcd.service
+      state: restarted
+      daemon_reload: yes
+      enabled: yes            
+  
+  - name: Edit the /etc/etcd/etcd.conf
+    template:
+      src: etcd.conf.j2
+      dest: /etc/etcd/etcd.conf
+      owner: root 
+      group: root
+      mode: '0640'
+  
+  - name: Start etcd service with new configurations
+    systemd:
+      name: etcd.service
+      state: restarted
+      daemon_reload: yes
+      enabled: yes
+
+
+
+
+
+    
+
+

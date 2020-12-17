@@ -1,0 +1,49 @@
+---
+# tasks file
+# https://docs.openstack.org/install-guide/openstack-services.html
+# https://docs.openstack.org/nova/train/install/compute-install-rdo.html
+# https://docs.openstack.org/train/install/
+
+  - include_vars: "{{ playbook_dir }}/config.yml"
+  - include_vars: "{{ playbook_dir }}/passwords.yml"
+  - include_vars: "main.yml"
+
+  - name: Installing the packages
+    yum:
+      name: "{{ packages }}"
+      state: latest
+    vars:
+      packages:
+        - openstack-nova-compute
+  
+  - name: Edit the /etc/nova/nova.conf
+    template:
+      src: nova.conf.j2
+      dest: /etc/nova/nova.conf
+      owner: root 
+      group: nova
+      mode: '0640'
+                    
+  - name: Start the Compute services and configure them to start when the system boots openstack-nova-api.service
+    systemd:
+      name: "{{ item }}"
+      enabled: yes
+      state: restarted
+    with_items:
+      - libvirtd.service
+      - openstack-nova-compute.service
+
+
+
+
+
+
+
+
+
+
+
+
+    
+
+

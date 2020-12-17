@@ -1,0 +1,79 @@
+---
+# tasks file
+# https://docs.openstack.org/install-guide/openstack-services.html
+# https://docs.openstack.org/cinder/train/install/cinder-storage-install-rdo.html
+# https://docs.openstack.org/train/install/
+
+  - include_vars: "{{ playbook_dir }}/config.yml"
+  - include_vars: "{{ playbook_dir }}/passwords.yml"
+  - include_vars: "main.yml"
+
+  - name: Installing the packages
+    yum:
+      name: "{{ packages }}"
+      state: latest
+    vars:
+      packages:
+        - lvm2
+        - device-mapper-persistent-data
+        - openstack-cinder
+        - targetcli
+        - python-keystone
+
+  - name: Start the LVM metadata service and configure it to start when the system boots
+    systemd:
+      name: "{{ item }}"
+      enabled: yes
+      state: restarted
+    with_items:
+      - lvm2-lvmetad.service
+      - lvm2-lvmetad.service
+
+  - name: Clear partition table
+    shell: |
+      dd if=/dev/zero of=/dev/sdb bs=512 count=10
+
+  - name: Create the LVM physical volume /dev/sdb             
+    shell: |
+      pvcreate /dev/{{ openstack.cinder.volume_device }}
+
+  - name: Create the LVM volume group cinder-volumes           
+    shell: |
+      vgcreate {{ openstack.cinder.volume_name }} /dev/{{ openstack.cinder.volume_device }}
+
+  
+  - name: Edit the /etc/lvm/lvm.conf file 
+    template:
+      src: lvm.conf.j2
+      dest: /etc/lvm/lvm.conf
+      owner: root 
+      group: root
+      mode: '0644'
+  
+  - name: Edit the /etc/cinder/cinder.conf file 
+    template:
+      src: cinder.conf.j2
+      dest: /etc/cinder/cinder.conf
+      owner: root 
+      group: cinder
+      mode: '0640'
+
+  
+  - name: Start the Block Storage services and configure them to start when the system boots
+    systemd:
+      name: "{{ item }}"
+      enabled: yes
+      state: restarted
+    with_items:
+      - openstack-cinder-volume.service
+      - target.service
+    
+      
+      
+
+
+
+
+    
+
+

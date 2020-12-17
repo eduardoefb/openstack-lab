@@ -1,0 +1,10 @@
+# Neutron - Controller
+# https://docs.openstack.org/nova/train/install/controller-install-rdo.html
+ 
+  - hosts: controller
+    user: root
+    roles:     
+      - role: teste
+
+
+     

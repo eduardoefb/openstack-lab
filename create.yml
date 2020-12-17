@@ -1,0 +1,172 @@
+# Enviroment:  
+
+# Passwords:
+# https://docs.openstack.org/install-guide/environment-security.html
+  - hosts: localhost
+    tasks:
+      - name: Create password file
+        shell: |
+           cat << EOF > passwords.yml
+           ---
+             ROOT_DBPASS: `openssl rand -hex 20` 
+             ADMIN_PASS: `openssl rand -hex 20` 
+             CINDER_DBPASS: `openssl rand -hex 20` 
+             CINDER_PASS: `openssl rand -hex 20` 
+             DASH_DBPASS: `openssl rand -hex 20` 
+             DEMO_PASS: `openssl rand -hex 20`
+             GLANCE_DBPASS: `openssl rand -hex 20`
+             GLANCE_PASS: `openssl rand -hex 20`
+             KEYSTONE_DBPASS: `openssl rand -hex 20`
+             METADATA_SECRET: `openssl rand -hex 20`
+             NEUTRON_DBPASS: `openssl rand -hex 20`
+             NEUTRON_PASS: `openssl rand -hex 20`
+             NOVA_DBPASS: `openssl rand -hex 20`
+             NOVA_PASS: `openssl rand -hex 20`
+             PLACEMENT_PASS: `openssl rand -hex 20`
+             PLACEMENT_DBPASS: `openssl rand -hex 20`
+             RABBIT_PASS: `openssl rand -hex 20`
+             HEAT_PASS: `openssl rand -hex 20`
+             HEAT_ADMIN_DOMAIN_PASS: `openssl rand -hex 20`
+             HEAT_DBPASS: `openssl rand -hex 20`
+
+           EOF
+      
+# https://docs.openstack.org/install-guide/environment-networking-controller.html
+  - hosts: controller, compute, storage
+    user: root
+    roles:     
+      - role: 01_enviroment  
+
+# NTP controller:
+# https://docs.openstack.org/install-guide/environment-ntp-controller.html
+  - hosts: controller
+    user: root
+    roles:     
+      - role: 02_ntp_controller      
+
+# NTP other nodes:
+# https://docs.openstack.org/install-guide/environment-ntp-other.html
+  - hosts: compute, storage
+    user: root
+    roles:     
+      - role: 03_ntp_other_nodes  
+ 
+ # Enviroment packages:
+ # https://docs.openstack.org/install-guide/environment-packages.html
+ # https://docs.openstack.org/install-guide/environment-packages-rdo.html
+  - hosts: controller, compute, storage
+    user: root
+    roles:     
+      - role: 04_enviroment_packages  
+
+ # SQL database:
+ # https://docs.openstack.org/install-guide/environment-sql-database-rdo.html
+ 
+  - hosts: controller
+    user: root
+    roles:     
+      - role: 05_sql_database  
+
+# Message queue
+# https://docs.openstack.org/install-guide/environment-messaging-rdo.html
+  - hosts: controller
+    user: root
+    roles:     
+      - role: 06_message_queue  
+
+# Memcached
+# https://docs.openstack.org/install-guide/environment-memcached-rdo.html
+  - hosts: controller
+    user: root
+    roles:     
+      - role: 07_memcached
+
+# Ectd
+# https://docs.openstack.org/install-guide/environment-etcd-rdo.html
+  - hosts: controller
+    user: root
+    roles:     
+      - role: 08_etcd     
+
+# keystone
+# https://docs.openstack.org/keystone/train/install/index-rdo.html
+  - hosts: controller
+    user: root
+    roles:     
+      - role: 09_keystone     
+
+# glance
+# https://docs.openstack.org/glance/train/install/install-rdo.html
+  - hosts: controller
+    user: root
+    roles:     
+      - role: 10_glance  
+
+# placement
+# https://docs.openstack.org/placement/train/install/install-rdo.html
+  - hosts: controller
+    user: root
+    roles:     
+      - role: 11_placement         
+
+# nova - Controller
+# https://docs.openstack.org/nova/train/install/controller-install-rdo.html
+  - hosts: controller
+    user: root
+    roles:     
+      - role: 12_nova_controller
+
+# nova - Compute
+# https://docs.openstack.org/nova/train/install/compute-install-rdo.html
+  - hosts: compute
+    user: root
+    roles:     
+      - role: 13_nova_compute
+
+# nova - Controller
+# https://docs.openstack.org/nova/train/install/controller-install-rdo.html
+  - hosts: controller
+    user: root
+    roles:     
+      - role: 14_nova_controller          
+
+# Neutron - Controller
+# https://docs.openstack.org/nova/train/install/controller-install-rdo.html
+  - hosts: controller
+    user: root
+    roles:     
+      - role: 15_neutron_controller    
+
+# Neutron - Compute
+# https://docs.openstack.org/nova/train/install/compute-install-rdo.html
+  - hosts: compute
+    user: root
+    roles:     
+      - role: 16_neutron_compute 
+
+# Neutron - Controller
+# https://docs.openstack.org/horizon/train/install/install-rdo.html
+  - hosts: controller
+    user: root
+    roles:     
+      - role: 17_horizon    
+
+
+# Cinder - Controller / Storage
+  - hosts: controller
+    user: root
+    roles:     
+      - role: 18_cinder_controller
+
+  - hosts: storage
+    user: root
+    roles:     
+      - role: 19_cinder_storage
+
+
+
+ # Heat - Controller
+  - hosts: controller
+    user: root
+    roles:     
+      - role: 20_heat_controller

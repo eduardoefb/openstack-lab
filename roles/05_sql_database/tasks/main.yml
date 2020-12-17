@@ -1,0 +1,70 @@
+---
+# tasks file
+# https://docs.openstack.org/install-guide/environment-sql-database-rdo.html
+
+
+  - include_vars: "{{ playbook_dir }}/config.yml"
+  - include_vars: "{{ playbook_dir }}/passwords.yml"
+  - include_vars: "main.yml"
+
+
+  - name: Uninstalling the packages
+    yum:
+      name: "{{ packages }}"
+      state: absent
+    vars:
+      packages:
+        - mariadb
+        - mariadb-server
+        - python2-PyMySQL
+
+  - name: Installing the packages
+    yum:
+      name: "{{ packages }}"
+      state: latest
+    vars:
+      packages:
+        - mariadb
+        - mariadb-server
+        - python2-PyMySQL
+  
+  - name: Configure mariadb
+    template:
+      src: openstack.cnf.j2
+      dest: /etc/my.cnf.d/openstack.cnf
+      owner: root 
+      group: root
+      mode: '0640'
+
+  - name: Clear mysql database files
+    file:
+      path: /var/lib/mysql/
+      state: absent
+  
+  - name: Create mysql database directory
+    file:
+      path: /var/lib/mysql/
+      state: directory
+      recurse: yes
+      owner: mysql
+      group: mysql
+      mode: '755'
+
+  - name: Start mysql service
+    systemd:
+      name: mariadb
+      state: restarted
+      enabled: yes
+
+  - name: Define root password for mysql
+    shell: |
+      mysqladmin -u root password {{ ROOT_DBPASS }}
+
+
+
+
+
+
+    
+
+
