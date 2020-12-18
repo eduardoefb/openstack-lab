@@ -13,7 +13,6 @@ cat << EOF > config.yml
       - 2.centos.pool.ntp.org
       - 3.centos.pool.ntp.org
 
-     
     oam:
       name: lab_oam
       network: 10.6.0.0
