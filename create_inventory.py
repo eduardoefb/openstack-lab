@@ -11,22 +11,22 @@ with open(sys.argv[1]) as f:
 
 fp = open("hosts", "w")
 
-st = "controller"
-fp.write("[" + str(st) + "]\n")
+role = "controller"
+fp.write("[" + str(role) + "]\n")
 for n in data["nodes"]:
-   if st in n["name"]:
+   if n["role"].strip() == role:   
       fp.write(n["oam_ip"] + "\n")
 	
-st = "compute"
-fp.write("\n[" + str(st) + "]\n")
+role = "compute"
+fp.write("\n[" + str(role) + "]\n")
 for n in data["nodes"]:
-   if st in n["name"]:
+   if n["role"].strip() == role:   
       fp.write(n["oam_ip"] + "\n")
 
-st = "storage"
-fp.write("\n[" + str(st) + "]\n")
+role = "storage"
+fp.write("\n[" + str(role) + "]\n")
 for n in data["nodes"]:
-   if st in n["name"]:
+   if n["role"].strip() == role:   
       fp.write(n["oam_ip"] + "\n")
 
 
