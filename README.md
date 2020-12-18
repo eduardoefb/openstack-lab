@@ -5,6 +5,8 @@ Use the example below as reference:
 cat << EOF > config.yml
 ---
 
+  timezone: Brazil/East
+  
   network:
     domain: openstack.int
     ntp_servers:      
